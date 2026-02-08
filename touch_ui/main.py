@@ -5,6 +5,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.core.window import Window
 # from kivy.clock import Clock
 import subprocess
+from logger import logger
 
 Window.size = (800, 480)  # Match Pi touchscreen
 
@@ -27,14 +28,14 @@ class CommandScreen(Screen):
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
-            print("Screen touched down")
+            logger.debug("Screen touched down")
             touch.ud["swiped"] = False  # reset gesture state
             return True
         return super().on_touch_down(touch)
 
     def on_touch_up(self, touch):
         if self.collide_point(*touch.pos):
-            print("Screen touched up")
+            logger.debug("Screen touched up")
             if not touch.ud.get("swiped", False):
                 subprocess.Popen(self.command, shell=True)
                 return True
@@ -56,11 +57,11 @@ class SwipeManager(ScreenManager):
             touch.ud["swiped"] = True  # lock swipe
 
             if touch.dx < 0:
-                print("Going to next screen:", self.next())
+                logger.info(f"Going to next screen {self.next()}")
                 self.transition = SlideTransition(direction="left")
                 self.current = self.next()
             else:
-                print("Going to next screen:", self.previous())
+                logger.info(f"Going to next screen {self.previous()}")
                 self.transition = SlideTransition(direction="right")
                 self.current = self.previous()
 
