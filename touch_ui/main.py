@@ -7,6 +7,7 @@ from kivy.core.window import Window
 # from kivy.clock import Clock
 import subprocess
 import logging
+from typing import Any, Literal
 from logger import logger
 
 logger.setLevel(logging.INFO)  # Set log level to DEBUG for detailed output
@@ -23,7 +24,7 @@ COMMANDS = [
 
 
 class CommandScreen(Screen):
-    def __init__(self, title, command, **kwargs):
+    def __init__(self, title: str, command: str, **kwargs: dict[str, Any]) -> None:
         super().__init__(**kwargs)
         self.command = command
         self.title = title
@@ -31,14 +32,14 @@ class CommandScreen(Screen):
         layout.add_widget(Label(text=title, font_size=48))
         self.add_widget(layout)
 
-    def on_touch_down(self, touch):
+    def on_touch_down(self, touch: Any) -> None | Literal[True]:
         if self.collide_point(*touch.pos):
             logger.debug("Screen touched down")
             touch.ud["swiped"] = False  # reset gesture state
             return True
         return super().on_touch_down(touch)
 
-    def on_touch_up(self, touch):
+    def on_touch_up(self, touch: Any) -> None | Literal[True]:
         if self.collide_point(*touch.pos):
             logger.debug("Screen touched up")
             if not touch.ud.get("swiped", False):
@@ -60,7 +61,7 @@ class CommandScreen(Screen):
 class SwipeManager(ScreenManager):
     SWIPE_THRESHOLD = 20  # pixels
 
-    def on_touch_move(self, touch):
+    def on_touch_move(self, touch: Any) -> None | bool:
         if not self.collide_point(*touch.pos):
             return super().on_touch_move(touch)
 
@@ -86,7 +87,7 @@ class SwipeManager(ScreenManager):
 
 
 class TouchUI(App):
-    def build(self):
+    def build(self) -> SwipeManager:
         sm = SwipeManager()
         for i, (title, cmd) in enumerate(COMMANDS):
             # sm.add_widget(CommandScreen(title, cmd, name=str(i)))
