@@ -1,14 +1,15 @@
+import logging
+import subprocess
+from typing import Any, Literal
+
 from kivy.app import App
-from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
-from kivy.uix.label import Label
-from kivy.uix.boxlayout import BoxLayout
 from kivy.core.window import Window
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
+from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
 
 # from kivy.clock import Clock
-import subprocess
-import logging
-from typing import Any, Literal
-from logger import logger
+from touchscreen.logger import logger
 
 logger.setLevel(logging.INFO)  # Set log level to DEBUG for detailed output
 
@@ -45,7 +46,9 @@ class CommandScreen(Screen):
             if not touch.ud.get("swiped", False):
                 try:
                     logger.info(f"Running command: {self.command}")
-                    p = subprocess.run(self.command, shell=True, timeout=60, capture_output=True, text=True)
+                    p = subprocess.run(
+                        self.command, shell=True, timeout=60, capture_output=True, text=True
+                    )
                     logger.debug(f"Command '{self.command}' executed with return code {p.returncode}")
                     logger.info(f"Command output: {p.stdout}")
                     logger.debug(f"Command error: {p.stderr}")
@@ -95,5 +98,10 @@ class TouchUI(App):
         return sm
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Entry point for the touchscreen application."""
     TouchUI().run()
+
+
+if __name__ == "__main__":
+    main()

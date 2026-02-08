@@ -1,9 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "touchscreen"
 version = "0.1.0"
-description = "Add your description here"
+description = "Touchscreen UI for Raspberry Pi"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "kivy>=2.3.1",
 ]
+
+[project.scripts]
+tscrn = "touchscreen.main:main"
+
+[dependency-groups]
+dev = [
+    "black>=26.1.0",
+    "ruff>=0.15.0",
+]
+
+[tool.black]
+line-length = 120
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "C90", "ANN"]
+ignore = ["ANN401"]
