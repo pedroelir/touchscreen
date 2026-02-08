@@ -3,6 +3,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
 from kivy.core.window import Window
+
 # from kivy.clock import Clock
 import subprocess
 import logging
@@ -19,6 +20,7 @@ COMMANDS = [
     ("Start Camera", "libcamera-hello"),
     ("List blocks", "lsblk"),
 ]
+
 
 class CommandScreen(Screen):
     def __init__(self, title, command, **kwargs):
@@ -90,6 +92,7 @@ class TouchUI(App):
             # sm.add_widget(CommandScreen(title, cmd, name=str(i)))
             sm.add_widget(CommandScreen(title, cmd, name=f"{i} - {title}"))
         return sm
+
 
 if __name__ == "__main__":
     TouchUI().run()

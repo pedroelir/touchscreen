@@ -16,17 +16,14 @@ logger.setLevel(logging.DEBUG)
 # Console handler with format: [LEVEL] - [python module] [line number] - message
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.DEBUG)
-console_formatter = logging.Formatter(
-    "[%(levelname)s] - [%(module)s:%(lineno)d] - %(message)s"
-)
+console_formatter = logging.Formatter("[%(levelname)s] - [%(module)s:%(lineno)d] - %(message)s")
 console_handler.setFormatter(console_formatter)
 
 # File handler with format: [timestamp] [LEVEL] - [python module] [line number] - message
 file_handler = logging.FileHandler(LOG_FILENAME)
 file_handler.setLevel(logging.DEBUG)
 file_formatter = logging.Formatter(
-    "[%(asctime)s] [%(levelname)s] - [%(module)s:%(lineno)d] - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
+    "[%(asctime)s] [%(levelname)s] - [%(module)s:%(lineno)d] - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
 )
 file_handler.setFormatter(file_formatter)
 
