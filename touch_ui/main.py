@@ -5,7 +5,10 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.core.window import Window
 # from kivy.clock import Clock
 import subprocess
+import logging
 from logger import logger
+
+logger.setLevel(logging.INFO)  # Set log level to DEBUG for detailed output
 
 Window.size = (800, 480)  # Match Pi touchscreen
 
@@ -37,7 +40,17 @@ class CommandScreen(Screen):
         if self.collide_point(*touch.pos):
             logger.debug("Screen touched up")
             if not touch.ud.get("swiped", False):
-                subprocess.Popen(self.command, shell=True)
+                try:
+                    logger.info(f"Running command: {self.command}")
+                    p = subprocess.run(self.command, shell=True, timeout=60, capture_output=True, text=True)
+                    logger.debug(f"Command '{self.command}' executed with return code {p.returncode}")
+                    logger.info(f"Command output: {p.stdout}")
+                    logger.debug(f"Command error: {p.stderr}")
+                except subprocess.TimeoutExpired:
+                    logger.warning(f"Command '{self.command}' timed out")
+                except Exception as e:
+                    logger.error(f"Error running command '{self.command}': {e}")
+
                 return True
         return super().on_touch_up(touch)
 
