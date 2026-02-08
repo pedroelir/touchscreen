@@ -28,29 +28,46 @@ class CommandScreen(Screen):
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
             print("Screen touched down")
-            subprocess.Popen(self.command, shell=True)
+            touch.ud["swiped"] = False  # reset gesture state
             return True
         return super().on_touch_down(touch)
 
-class SwipeManager(ScreenManager):
-    def on_touch_move(self, touch):
-        if abs(touch.dx) > 40:
-            if touch.dx < 0:
-                print("Swiped left")
-                self.transition = SlideTransition(direction="left")
-                print("Going to next screen:", self.next())
-                self.current = self.next()
+    def on_touch_up(self, touch):
+        if self.collide_point(*touch.pos):
+            print("Screen touched up")
+            if not touch.ud.get("swiped", False):
+                subprocess.Popen(self.command, shell=True)
+                return True
+        return super().on_touch_up(touch)
 
-            else:
-                print("Swiped right")
-                self.transition = SlideTransition(direction="right")
-                print("Going to previous screen:", self.previous())
-                self.current = self.previous()
-                
+
+class SwipeManager(ScreenManager):
+    SWIPE_THRESHOLD = 20  # pixels
+
+    def on_touch_move(self, touch):
+        if not self.collide_point(*touch.pos):
+            return super().on_touch_move(touch)
+
+        # Already swiped → ignore further movement
+        if touch.ud.get("swiped", False):
             return True
-        else:
-            print("Swipe too short, ignoring")
+
+        if abs(touch.dx) > self.SWIPE_THRESHOLD:
+            touch.ud["swiped"] = True  # lock swipe
+
+            if touch.dx < 0:
+                print("Going to next screen:", self.next())
+                self.transition = SlideTransition(direction="left")
+                self.current = self.next()
+            else:
+                print("Going to next screen:", self.previous())
+                self.transition = SlideTransition(direction="right")
+                self.current = self.previous()
+
+            return True
+
         return super().on_touch_move(touch)
+
 
 class TouchUI(App):
     def build(self):
