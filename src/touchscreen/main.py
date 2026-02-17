@@ -8,8 +8,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
 from kivy.graphics import Color, Rectangle
-
-# from kivy.clock import Clock
+from kivy.clock import Clock
 from touchscreen.logger import logger
 from touchscreen.commands import COMMANDS
 
@@ -58,6 +57,15 @@ class CommandScreen(Screen):
         if self.collide_point(*touch.pos):
             logger.debug("Screen touched up")
             if not touch.ud.get("swiped", False):
+                # special-case exit/quit commands: show goodbye and close app
+                if str(self.command).strip().lower() in ("exit", "quit", "close"):
+                    logger.info("Exit command invoked from UI")
+                    self.output_label.text = "goodbye!"
+                    self.retcode_label.text = "0"
+                    self._ret_color.rgba = (0, 1, 0, 1)
+                    Clock.schedule_once(lambda dt: App.get_running_app().stop(), 1.2)
+                    return True
+
                 try:
                     logger.info(f"Running command: {self.command}")
                     p = subprocess.run(self.command, shell=True, timeout=60, capture_output=True, text=True)
