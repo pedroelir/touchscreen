@@ -8,20 +8,12 @@ from kivy.core.window import Window
 import subprocess
 import logging
 from typing import Any, Literal
-from logger import logger
+from touch_ui.logger import logger
+from touch_ui.commands import COMMANDS
 
 logger.setLevel(logging.INFO)  # Set log level to DEBUG for detailed output
 
 Window.size = (800, 480)  # Match Pi touchscreen
-
-COMMANDS = [
-    # ("Reboot", "sudo reboot"),
-    # ("Shutdown", "sudo shutdown now"),
-    ("Say Hello", "echo 'Hello, World!'"),
-    ("Start Camera", "libcamera-hello"),
-    ("List blocks", "lsblk"),
-]
-
 
 class CommandScreen(Screen):
     def __init__(self, title: str, command: str, **kwargs: dict[str, Any]) -> None:
