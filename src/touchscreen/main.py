@@ -23,11 +23,11 @@ class CommandScreen(Screen):
         self.command = command
         self.title = title
         layout = BoxLayout(orientation="vertical")
+        self.retcode_label = Label(text="", size_hint_y=None, height=36, font_size=18)
         self.title_label = Label(text=title, font_size=48)
-        # Label to show first 15 chars of output
-        self.output_label = Label(text="", font_size=28)
+        # Label to show first 150 chars of output
+        self.output_label = Label(text="", font_size=18)
         # Label to show return code with colored background
-        self.retcode_label = Label(text="", size_hint_y=None, height=48, font_size=24)
 
         # Add a colored background to the retcode_label using canvas
         with self.retcode_label.canvas.before:
@@ -36,15 +36,15 @@ class CommandScreen(Screen):
             self._ret_rect = Rectangle(pos=self.retcode_label.pos, size=self.retcode_label.size)
 
         # Keep rectangle size/pos in sync
-        def _update_rect(instance, value):
+        def _update_rect(instance: Any, value: Any) -> None:
             self._ret_rect.pos = instance.pos
             self._ret_rect.size = instance.size
 
         self.retcode_label.bind(pos=_update_rect, size=_update_rect)
 
+        layout.add_widget(self.retcode_label)
         layout.add_widget(self.title_label)
         layout.add_widget(self.output_label)
-        layout.add_widget(self.retcode_label)
         self.add_widget(layout)
 
     def on_touch_down(self, touch: Any) -> None | Literal[True]:
@@ -64,9 +64,9 @@ class CommandScreen(Screen):
                     logger.debug(f"Command '{self.command}' executed with return code {p.returncode}")
                     logger.info(f"Command output: {p.stdout}")
                     logger.debug(f"Command error: {p.stderr}")
-                    # Update UI: show first 15 characters of stdout and return code with colored background
+                    # Update UI: show first 150 characters of stdout and return code with colored background
                     out = (p.stdout or "").replace("\n", " ")
-                    snippet = out[:15]
+                    snippet = out[:150]
                     self.output_label.text = snippet
                     self.retcode_label.text = str(p.returncode)
                     # Green background for success, red otherwise
