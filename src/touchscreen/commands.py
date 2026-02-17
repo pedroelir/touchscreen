@@ -4,6 +4,6 @@ COMMANDS = [
     ("Say Hello", "echo 'Hello, World!'"),
     ("Check devices", "adb devices"),
     ("List blocks", "lsblk"),
-    ("Exit App", "exit"),
     ("Uptime ", "uptime"),
+    ("Exit App", "exit"),
 ]
