@@ -5,4 +5,5 @@ COMMANDS = [
     ("Check devices", "adb devices"),
     ("List blocks", "lsblk"),
     ("Exit App", "exit"),
+    ("Uptime ", "uptime"),
 ]

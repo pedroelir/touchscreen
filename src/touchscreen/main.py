@@ -1,5 +1,6 @@
 import logging
 import subprocess
+import time
 from typing import Any, Literal
 
 from kivy.app import App
@@ -55,7 +56,15 @@ class CommandScreen(Screen):
 
     def on_touch_up(self, touch: Any) -> None | Literal[True]:
         if self.collide_point(*touch.pos):
+            # prevent handling multiple touches in quick succession
+            last = getattr(self, "_last_touch", 0)
+            if time.monotonic() - last < 1.0:
+                logger.debug("Touch ignored due to 1s cooldown")
+                return True
+
             logger.debug("Screen touched up")
+            # record touch time (1s cooldown)
+            self._last_touch = time.monotonic()
             if not touch.ud.get("swiped", False):
                 # special-case exit/quit commands: show goodbye and close app
                 if str(self.command).strip().lower() in ("exit", "quit", "close"):
@@ -98,6 +107,12 @@ class SwipeManager(ScreenManager):
         if not self.collide_point(*touch.pos):
             return super().on_touch_move(touch)
 
+        # enforce a short cooldown after a swap to avoid duplicate swaps
+        last_swap = getattr(self, "_last_swap", 0)
+        if time.monotonic() - last_swap < 0.2:
+            logger.debug("Swipe ignored due to 200ms cooldown")
+            return True
+
         # Already swiped → ignore further movement
         if touch.ud.get("swiped", False):
             return True
@@ -113,6 +128,9 @@ class SwipeManager(ScreenManager):
                 logger.info(f"Going to next screen {self.previous()}")
                 self.transition = SlideTransition(direction="right")
                 self.current = self.previous()
+
+            # record time of swap to enforce cooldown
+            self._last_swap = time.monotonic()
 
             return True
 
