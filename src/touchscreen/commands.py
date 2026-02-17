@@ -1,5 +1,9 @@
-COMMANDS = {
-    "reboot": "sudo reboot",
-    "shutdown": "sudo shutdown now",
-    "camera": "libcamera-hello",
-}
+COMMANDS = [
+    # ("Reboot", "sudo reboot"),
+    # ("Shutdown", "sudo shutdown now"),
+    ("Say Hello", "echo 'Hello, World!'"),
+    ("Check devices", "adb devices"),
+    ("List blocks", "lsblk"),
+    ("Uptime ", "uptime"),
+    ("Exit App", "exit"),
+]

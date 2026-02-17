@@ -1,5 +1,6 @@
 import logging
 import subprocess
+import time
 from typing import Any, Literal
 
 from kivy.app import App
@@ -7,30 +8,43 @@ from kivy.core.window import Window
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
-
-# from kivy.clock import Clock
+from kivy.graphics import Color, Rectangle
+from kivy.clock import Clock
 from touchscreen.logger import logger
+from touchscreen.commands import COMMANDS
 
 logger.setLevel(logging.INFO)  # Set log level to DEBUG for detailed output
 
 Window.size = (800, 480)  # Match Pi touchscreen
-
-COMMANDS = [
-    # ("Reboot", "sudo reboot"),
-    # ("Shutdown", "sudo shutdown now"),
-    ("Say Hello", "echo 'Hello, World!'"),
-    ("Start Camera", "libcamera-hello"),
-    ("List blocks", "lsblk"),
-]
-
 
 class CommandScreen(Screen):
     def __init__(self, title: str, command: str, **kwargs: dict[str, Any]) -> None:
         super().__init__(**kwargs)
         self.command = command
         self.title = title
-        layout = BoxLayout()
-        layout.add_widget(Label(text=title, font_size=48))
+        layout = BoxLayout(orientation="vertical")
+        self.retcode_label = Label(text="", size_hint_y=None, height=36, font_size=18)
+        self.title_label = Label(text=title, font_size=48)
+        # Label to show first 150 chars of output
+        self.output_label = Label(text="", font_size=18)
+        # Label to show return code with colored background
+
+        # Add a colored background to the retcode_label using canvas
+        with self.retcode_label.canvas.before:
+            # default color: gray
+            self._ret_color = Color(0.5, 0.5, 0.5, 1)
+            self._ret_rect = Rectangle(pos=self.retcode_label.pos, size=self.retcode_label.size)
+
+        # Keep rectangle size/pos in sync
+        def _update_rect(instance: Any, value: Any) -> None:
+            self._ret_rect.pos = instance.pos
+            self._ret_rect.size = instance.size
+
+        self.retcode_label.bind(pos=_update_rect, size=_update_rect)
+
+        layout.add_widget(self.retcode_label)
+        layout.add_widget(self.title_label)
+        layout.add_widget(self.output_label)
         self.add_widget(layout)
 
     def on_touch_down(self, touch: Any) -> None | Literal[True]:
@@ -42,16 +56,41 @@ class CommandScreen(Screen):
 
     def on_touch_up(self, touch: Any) -> None | Literal[True]:
         if self.collide_point(*touch.pos):
+            # prevent handling multiple touches in quick succession
+            last = getattr(self, "_last_touch", 0)
+            if time.monotonic() - last < 1.0:
+                logger.debug("Touch ignored due to 1s cooldown")
+                return True
+
             logger.debug("Screen touched up")
+            # record touch time (1s cooldown)
+            self._last_touch = time.monotonic()
             if not touch.ud.get("swiped", False):
+                # special-case exit/quit commands: show goodbye and close app
+                if str(self.command).strip().lower() in ("exit", "quit", "close"):
+                    logger.info("Exit command invoked from UI")
+                    self.output_label.text = "goodbye!"
+                    self.retcode_label.text = "0"
+                    self._ret_color.rgba = (0, 1, 0, 1)
+                    Clock.schedule_once(lambda dt: App.get_running_app().stop(), 1.2)
+                    return True
+
                 try:
                     logger.info(f"Running command: {self.command}")
-                    p = subprocess.run(
-                        self.command, shell=True, timeout=60, capture_output=True, text=True
-                    )
+                    p = subprocess.run(self.command, shell=True, timeout=60, capture_output=True, text=True)
                     logger.debug(f"Command '{self.command}' executed with return code {p.returncode}")
                     logger.info(f"Command output: {p.stdout}")
                     logger.debug(f"Command error: {p.stderr}")
+                    # Update UI: show first 150 characters of stdout and return code with colored background
+                    out = (p.stdout or "").replace("\n", " ")
+                    snippet = out[:150]
+                    self.output_label.text = snippet
+                    self.retcode_label.text = str(p.returncode)
+                    # Green background for success, red otherwise
+                    if p.returncode == 0:
+                        self._ret_color.rgba = (0, 1, 0, 1)
+                    else:
+                        self._ret_color.rgba = (1, 0, 0, 1)
                 except subprocess.TimeoutExpired:
                     logger.warning(f"Command '{self.command}' timed out")
                 except Exception as e:
@@ -68,6 +107,12 @@ class SwipeManager(ScreenManager):
         if not self.collide_point(*touch.pos):
             return super().on_touch_move(touch)
 
+        # enforce a short cooldown after a swap to avoid duplicate swaps
+        last_swap = getattr(self, "_last_swap", 0)
+        if time.monotonic() - last_swap < 0.2:
+            logger.debug("Swipe ignored due to 200ms cooldown")
+            return True
+
         # Already swiped → ignore further movement
         if touch.ud.get("swiped", False):
             return True
@@ -83,6 +128,9 @@ class SwipeManager(ScreenManager):
                 logger.info(f"Going to next screen {self.previous()}")
                 self.transition = SlideTransition(direction="right")
                 self.current = self.previous()
+
+            # record time of swap to enforce cooldown
+            self._last_swap = time.monotonic()
 
             return True
 
